@@ -1,5 +1,6 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import Response
 
 from app.core.config import settings
 from app.core.database import engine, Base, SessionLocal
@@ -24,13 +25,21 @@ app = FastAPI(
     redoc_url="/redoc"
 )
 
+# Robust CORS middleware configuration for production deployment
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
-    allow_credentials=True,
-    allow_methods=["*"],
+    allow_credentials=False,
+    allow_methods=["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS", "HEAD"],
     allow_headers=["*"],
+    expose_headers=["*"]
 )
+
+# Explicitly handle Render HEAD health probes
+@app.head("/")
+@app.head("/api/v1/health")
+def head_check():
+    return Response(status_code=200)
 
 app.include_router(router, prefix=settings.API_V1_STR)
 
